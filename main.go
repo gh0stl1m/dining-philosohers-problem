@@ -47,6 +47,7 @@ func main() {
   }
 
   ordersCh := make(chan string, len(philosophers))
+  defer close(ordersCh)
   ordersCompleted := []string{}
   dine(philosophers, ordersCh)
 
