@@ -37,6 +37,7 @@ func main() {
   fmt.Println("--------------------------")
   fmt.Println("The table is empty")
 
+
   philosophers := []Philosopher {
     { name: "Plato", leftFork: 4, rightFork: 0 },
     { name: "Socrates", leftFork: 0, rightFork: 1 },
@@ -45,11 +46,21 @@ func main() {
     { name: "Locke", leftFork: 3, rightFork: 4 },
   }
 
-  dine(philosophers)
+  ordersCh := make(chan string, len(philosophers))
+  ordersCompleted := []string{}
+  dine(philosophers, ordersCh)
+
+  fmt.Println("The table is empty")
+
+  for i := 0; i < len(philosophers); i++ {
+
+    ordersCompleted = append(ordersCompleted, <-ordersCh)
+  }
+  fmt.Println("Orders completed: ", ordersCompleted)
   
 }
 
-func dine(philosophers []Philosopher) {
+func dine(philosophers []Philosopher, ordersCh chan string) {
 
   eatingWG := &sync.WaitGroup{}
   eatingWG.Add(len(philosophers))
@@ -70,6 +81,7 @@ func dine(philosophers []Philosopher) {
       eatingWG: eatingWG,
       forks: forks,
       seatedWG: seatedWG,
+      ordersCh: ordersCh,
     })
   }
 
@@ -81,6 +93,7 @@ type EatParameters struct {
   eatingWG *sync.WaitGroup
   forks map[int]*sync.Mutex
   seatedWG *sync.WaitGroup
+  ordersCh chan string
 }
 
 func eat(params EatParameters) {
@@ -119,4 +132,5 @@ func eat(params EatParameters) {
   }
 
   fmt.Printf("%s left the table \n", params.philosopher.name)
+  params.ordersCh <- params.philosopher.name
 }
